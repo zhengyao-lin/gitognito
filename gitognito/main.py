@@ -11,6 +11,7 @@ def main():
     parser.add_argument("repo", help="URL to the original Git repository")
     parser.add_argument("target", help="URL to the target Git repository")
     parser.add_argument("target_branch", help="Branch to push in the target repository")
+    parser.add_argument("-f", "--force", action="store_true", default=False, help="Force push to the target repository")
     args = parser.parse_args()
 
     with TemporaryDirectory() as tmp_dir:
@@ -43,7 +44,7 @@ def main():
         print("pushing to the target repo...")
         origin = repo.create_remote("origin", args.target)
         repo.active_branch.rename(args.target_branch)
-        origin.push(refspec=f"{args.target_branch}:{args.target_branch}")
+        origin.push(refspec=f"{args.target_branch}:{args.target_branch}", force=args.force)
 
 
 if __name__ == "__main__":
