@@ -1,6 +1,7 @@
 import os
 import shutil
 import argparse
+import subprocess
 from tempfile import TemporaryDirectory
 
 from git import Repo, Actor
@@ -17,15 +18,22 @@ def main():
     parser.add_argument("-m", "--message", default="Init", help="Message to use in the final commit")
     args = parser.parse_args()
 
+    # logging.basicConfig(level=logging.DEBUG)
+
     with TemporaryDirectory() as tmp_dir:
         print("cloning original repo...")
-        repo = Repo.clone_from(args.source, os.path.join(tmp_dir, "original"))
+        repo = Repo.clone_from(args.source, tmp_dir)
 
         print("flattening submodules...")
+
         # Recursively initialize all submodules first
-        for submodule in repo.submodules:
-            print(submodule.path)
-            submodule.update(init=True, recursive=True)
+        result = subprocess.run(
+            [ "git", "submodule", "update", "--init", "--recursive" ],
+            cwd=repo.working_tree_dir, text=True,
+        )
+        if result.returncode != 0:
+            print("failed to initialize all submodules")
+            return
 
         # Remove any .git and .gitmodules
         for root, dirs, files in os.walk(repo.working_tree_dir, topdown=True):
